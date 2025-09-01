@@ -1,0 +1,183 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{array,booktabs}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\setlist[itemize]{left=0pt,itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{left=0pt,itemsep=4pt,topsep=6pt}
+
+\newcommand{\ruleline}{\par\noindent\rule{\textwidth}{0.4pt}\par}
+\newcommand{\blank}[1]{\makebox[#1]{\hrulefill}}
+\newcommand{\sq}{\(\square\)}
+
+\begin{document}
+
+\begin{center}
+{\LARGE \textbf{Guided Investigation: Mirror \& Spin Lab — Even/Odd Functions}}\\[4pt]
+\textit{Discover symmetry by exploring an interactive applet.}
+\end{center}
+
+\vspace{0.5em}
+\noindent \textbf{Name:} \blank{2.5in} \hfill \textbf{Class:} \blank{1.5in} \hfill \textbf{Date:} \blank{1.0in}
+
+\ruleline
+
+\section*{Purpose \& Learning Goals}
+\begin{itemize}
+  \item Use the Mirror (y-axis reflection) and Spin (180$^\circ$ about the origin) overlays to \textbf{detect patterns} in graphs.
+  \item \textbf{Form a conjecture} about when a function matches the Mirror overlay versus the Spin overlay.
+  \item \textbf{Test, refine, and justify} your conjecture using examples and non-examples.
+\end{itemize}
+
+\section*{Materials}
+\begin{itemize}
+  \item Computer with the \textit{Mirror \& Spin Lab} applet open (no login or submission needed).
+  \item This investigation sheet and a pen/pencil.
+\end{itemize}
+
+\section*{Ground Rules}
+\begin{itemize}
+  \item The goal is \textbf{discovery}. Avoid using outside definitions; rely on \textbf{what you observe}.
+  \item Record \textbf{clear evidence} (screenshots not required). Use the tables below.
+  \item If the applet shows an expression error, adjust your input (e.g., use \texttt{|x|} for absolute value; \texttt{ln(x)} for natural log; \verb|^| for powers).
+\end{itemize}
+
+\ruleline
+
+\section*{Part A — Orientation (5--8 min)}
+\begin{enumerate}
+  \item In the applet, ensure \textbf{Mirror} is checked and \textbf{Spin} is unchecked. Try the presets \texttt{x\^{}2}, \texttt{|x|}, \texttt{cos(x)}.
+  \begin{itemize}
+    \item What happens when the Mirror overlay \emph{matches exactly} the blue graph? Describe in your own words: \\
+    \vspace{1.4em}\ruleline
+  \end{itemize}
+  \item Now uncheck \textbf{Mirror} and check \textbf{Spin}. Try \texttt{x}, \texttt{x\^{}3}, \texttt{sin(x)}.
+  \begin{itemize}
+    \item What happens when the Spin overlay \emph{matches exactly}? Describe: \\
+    \vspace{1.4em}\ruleline
+  \end{itemize}
+\end{enumerate}
+
+\section*{Part B — Collect Evidence (10--12 min)}
+Use the table to log at least \textbf{8 functions}: aim for at least 3 that match Mirror, 3 that match Spin, and 2 that match neither. Use the applet's classification panel only to \emph{check} your thinking.
+
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{0.30\linewidth}p{0.18\linewidth}p{0.42\linewidth}@{}}
+\toprule
+\textbf{Function \(f(x)\)} & \textbf{Overlay Match} & \textbf{What you noticed (shape, symmetry, values at \(\pm x\), etc.)} \\
+\midrule
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\blank{.28\linewidth} & Mirror / Spin / Neither & \blank{.40\linewidth} \\
+\bottomrule
+\end{tabular}
+
+\section*{Part C — Make a Conjecture (6--8 min)}
+\begin{enumerate}
+  \item Based on your table, write a \textbf{first draft} rule for when a function matches the Mirror overlay: \\[0.6em]
+  \ruleline
+  \item Write a \textbf{first draft} rule for when a function matches the Spin overlay: \\[0.6em]
+  \ruleline
+  \item Without calculating, what \emph{relationship} might hold between the y-values at \(x\) and \(-x\) when the Mirror overlay matches? When the Spin overlay matches?\\[0.6em]
+  \ruleline
+\end{enumerate}
+
+\section*{Part D — Stress Test Your Conjecture (10--15 min)}
+Use the applet's \textbf{Transform} chips to modify functions and see what happens.
+
+\subsection*{D1. Vertical/Horizontal Shifts}
+\begin{itemize}
+  \item Start with a function that matched Mirror. Try \(f(x)+c\) and \(f(x-h)\). Which (if any) changes kept the match? Which broke it? Why might that be?
+\end{itemize}
+\noindent Observations: \\
+\ruleline
+
+\subsection*{D2. Multiply by \(-1\) and by \(x\)}
+\begin{itemize}
+  \item Pick a function that matched Mirror. Try \(-f(x)\) and \(x\cdot f(x)\). What happens to the overlay match?
+  \item Repeat with a function that matched Spin.
+\end{itemize}
+\noindent Observations: \\
+\ruleline
+
+\subsection*{D3. Stretching}
+\begin{itemize}
+  \item Try \(k\cdot f(x)\) and \(f(kx)\) with \(k>0\). Which transformations preserve each kind of match?
+\end{itemize}
+\noindent Observations: \\
+\ruleline
+
+\subsection*{D4. Edge Cases}
+\begin{itemize}
+  \item Explore \(\,0\) (the zero function), \(|x|\), \(\ln(x)\), \(\sqrt{x}\). Note any domain issues and how they affect matching.
+\end{itemize}
+\noindent Observations: \\
+\ruleline
+
+\section*{Part E — Refine \& Justify (8--10 min)}
+\begin{enumerate}
+  \item \textbf{Refined Conjecture (Mirror):}\\
+    \ruleline
+  \item \textbf{Refined Conjecture (Spin):}\\
+    \ruleline
+  \item \textbf{Evidence set.} List two functions that \emph{support} each conjecture and one \emph{counterexample} for each (explain why it fails).\\[0.3em]
+  \begin{tabular}{@{}p{0.32\linewidth}p{0.28\linewidth}p{0.34\linewidth}@{}}
+  \toprule
+  \textbf{Conjecture} & \textbf{Example/Counterexample} & \textbf{Why this supports or refutes} \\
+  \midrule
+  Mirror & Example: \blank{.24\linewidth} & \blank{.30\linewidth} \\
+  Mirror & Example: \blank{.24\linewidth} & \blank{.30\linewidth} \\
+  Mirror & Counterexample: \blank{.18\linewidth} & \blank{.30\linewidth} \\
+  \midrule
+  Spin & Example: \blank{.26\linewidth} & \blank{.30\linewidth} \\
+  Spin & Example: \blank{.26\linewidth} & \blank{.30\linewidth} \\
+  Spin & Counterexample: \blank{.20\linewidth} & \blank{.30\linewidth} \\
+  \bottomrule
+  \end{tabular}
+\end{enumerate}
+
+\section*{Numeric Spot-Checks (optional)}
+Pick 3 values of \(x\) and compare \(f(x)\), \(f(-x)\), and \(-f(x)\) for a function of your choice.
+\[
+\begin{array}{r|c|c|c}
+x & f(x) & f(-x) & -f(x)\\\hline
+\blank{1cm} & \blank{1.6cm} & \blank{1.6cm} & \blank{1.6cm}\\
+\blank{1cm} & \blank{1.6cm} & \blank{1.6cm} & \blank{1.6cm}\\
+\blank{1cm} & \blank{1.6cm} & \blank{1.6cm} & \blank{1.6cm}\\
+\end{array}
+\]
+
+\ruleline
+
+\section*{Reflection (3--5 min)}
+\begin{itemize}
+  \item What \textbf{visual cue} most reliably told you that a function matched Mirror? Spin?
+  \item Which transformation most \emph{surprised} you in how it affected matching, and why?
+  \item If you had to explain your findings to a friend using only pictures, how would you do it?
+\end{itemize}
+\vspace{1.5em}\ruleline
+
+\section*{(Teacher) Success Criteria — Investigating Patterns}
+\textit{Focus on reasoning and use of evidence.}
+\begin{itemize}
+  \item \textbf{Systematic exploration:} a varied set of examples/non-examples (Mirror, Spin, Neither) recorded.
+  \item \textbf{Conjecturing:} clear, testable statements in students’ own words.
+  \item \textbf{Testing \& refinement:} transformations and edge cases are used to probe limits.
+  \item \textbf{Justification:} examples and counterexamples linked explicitly to the conjecture.
+  \item \textbf{Clarity:} reasoning communicated with correct use of the applet’s observations.
+\end{itemize}
+
+\vfill
+\begin{center}
+\textit{Reminder: You do not submit anything online for this activity. Use the applet to explore and this sheet to capture your thinking.}
+\end{center}
+
+\end{document}
