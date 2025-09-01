@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mirror & Spin Lab — Even/Odd (Guided Inquiry, Offline)</title>
+  <style>
+    :root{ --bg:#f8fafc; --card:#fff; --ring:#e5e7eb; --text:#0f172a; --muted:#64748b; }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:linear-gradient(#f8fafc,#fff);color:var(--text)}
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+    h1{margin:0 0 8px;font-size:clamp(20px,2.6vw,28px)} .muted{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr;gap:20px}
+    @media (min-width:1200px){ .grid{grid-template-columns:3fr 2fr} }
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    label.inline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+    input[type=text], input[type=number]{border:1px solid #d1d5db;border-radius:12px;padding:8px 10px;font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+    .grow{flex:1 1 260px}
+    .chip{border:1px solid rgba(0,0,0,.08);border-radius:999px;padding:.4rem .7rem;font-size:14px;cursor:pointer}
+    .chip.gray{background:#f8fafc;color:#334155}
+    .chip.indigo{background:#eef2ff;color:#3730a3}
+    .chip.green{background:#ecfdf5;color:#065f46}
+    .chip.orange{background:#fff7ed;color:#9a3412}
+    .badge{border:1px solid #e5e7eb;border-radius:999px;padding:.1rem .5rem;font-weight:600;font-size:12px}
+    .badge.even{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .badge.odd{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+    .badge.neither{background:#f1f5f9;color:#475569}
+    .badge.both{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+    table{border-collapse:collapse;width:100%}
+    th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #f1f5f9;font-size:14px}
+    tr:nth-child(odd){background:rgba(148,163,184,.06)}
+    .small{font-size:12px;color:#64748b}
+    .error{color:#b91c1c;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Mirror &amp; Spin Lab – Even/Odd (Guided Inquiry)</h1>
+      <p class="muted">Explore symmetry by overlaying a mirror across the y-axis and a 180° spin about the origin. Discover patterns yourself.</p>
+    </header>
+
+    <section class="grid">
+      <div class="left">
+        <div class="card">
+          <div class="row">
+            <label class="grow">
+              <div class="muted" style="margin-bottom:4px">Enter function f(x)</div>
+              <input id="expr" type="text" value="x^2" placeholder="e.g. x^4 - 3x^2 + 2, |x|, cos(x), ln(x)" />
+            </label>
+            <label class="inline"><input id="showMirror" type="checkbox" checked /> Mirror overlay</label>
+            <label class="inline"><input id="showSpin" type="checkbox" /> 180° spin overlay</label>
+          </div>
+          <div id="error" class="error" style="margin-top:6px"></div>
+        </div>
+
+        <div class="card">
+          <svg id="graph" viewBox="0 0 760 460" style="width:100%;display:block;background:white;border-radius:12px;border:1px solid var(--ring)"></svg>
+        </div>
+
+        <div class="card" id="rangeCtl"></div>
+        <div class="card" id="parityPanel"></div>
+        <div class="card" id="sampleTable"></div>
+      </div>
+
+      <div class="right">
+        <div class="card" id="inquiry"></div>
+
+        <div class="card">
+          <div class="muted" style="font-weight:600;margin-bottom:6px">Function Cards</div>
+          <div id="presets"></div>
+        </div>
+
+        <div class="card" id="transformPanel"></div>
+
+        <div class="card small">
+          <div class="muted" style="font-weight:600;margin-bottom:4px;color:#334155">Tips</div>
+          <ul style="margin:6px 0 0 18px">
+            <li>Use <code>|x|</code> or <code>abs(x)</code> for absolute value. Use <code>ln</code> for natural log.</li>
+            <li>Horizontal shifts typically break even/odd; vertical shifts keep even but break odd (unless shift = 0).</li>
+            <li>Zero function is both even and odd.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer class="small" style="text-align:center;margin-top:12px">
+      Offline, single-file. No eval, no CDNs. Syntax: + - * / ^, parentheses, x, pi, e, sin cos tan, asin acos atan, sinh cosh tanh, sqrt abs exp ln log, floor ceil round sign cbrt max min pow.
+    </footer>
+  </div>
+
+  <script>
+  (function(){
+    // ---------- Normalization ----------
+    function normalizeExpr(s){
+      if (!s) return s;
+      s = s.replace(/[\u00A0\u2000-\u200B\u202F]/g, ' ');
+      s = s.replace(/[\u2212\u2010-\u2015]/g, '-');
+      s = s.replace(/[\u00D7\u22C5\u00B7\u2219\u2022\u2715\u2716\u2A2F\u2217]/g, '*');
+      s = s.replace(/[\u00F7\u2215\u2044]/g, '/');
+      s = s.replace(/[\u03C0\u03A0]/g, 'pi');
+      s = s.replace(/[\u1D465\uFF58]/g, 'x');
+      const supers = {'\u2070':'0','\u00B1':'','\u00B2':'2','\u00B3':'3','\u2074':'4','\u2075':'5','\u2076':'6','\u2077':'7','\u2078':'8','\u2079':'9'};
+      s = s.replace(/([A-Za-z0-9)\]])([\u2070\u00B2\u00B3\u2074-\u2079]+)/g, function(_,b,seq){
+        return b + '^' + Array.prototype.map.call(seq, ch=>supers[ch]||'').join('');
+      });
+      return s;
+    }
+    function convertBarsToAbs(src){ var out='',open=0; for (var i=0;i<src.length;i++){ var ch=src[i]; if (ch==='|'){ if(!open){open=1; out+='abs(';} else {open=0; out+=')';} } else out+=ch; } if(open) throw new Error('Unmatched | bars'); return out; }
+    function insertMissingParensForUnary(s){
+      var u='(sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|asinh|acosh|atanh|sqrt|abs|exp|ln|log|floor|ceil|round|sign|cbrt)';
+      s=s.replace(new RegExp('\\b'+u+'\\s*(x|pi|e)\\b','gi'),'$1($2)');
+      s=s.replace(new RegExp('\\b'+u+'\\s*(-?\\d+(?:\\.\\d+)?)','gi'),'$1($2)');
+      return s;
+    }
+    function insertImplicitMult(s){
+      s=s.replace(/(\d(?:\.\d+)?|x|pi|e|\))\s*\(/g,'$1*(');
+      s=s.replace(/(\d(?:\.\d+)?|\))\s*(x|pi|e)\b/g,'$1*$2');
+      s=s.replace(/\b(x|pi|e)\s*(\d)/g,'$1*$2');
+      s=s.replace(/(x|pi|e|\))\s*([A-Za-z]+)\s*\(/g,'$1*$2(');
+      s=s.replace(/\)\s*\(/g,')*(');
+      s=s.replace(/x\s*x/g,'x*x');
+      return s;
+    }
+
+    // ---------- Parser ----------
+    function tokenize(expr){
+      var t=[],s=expr,i=0; function isD(c){return c>='0'&&c<='9'}; function isL(c){return /[A-Za-z_]/.test(c)}; var last='BOF';
+      while(i<s.length){
+        var c=s[i];
+        if(/\s/.test(c)){i++;continue;}
+        if(c===','){t.push({type:'comma'});last='comma';i++;continue;}
+        if(c==='('){t.push({type:'('});last='(';i++;continue;}
+        if(c===')'){t.push({type:')'});last=')';i++;continue;}
+        if('+-*/^'.indexOf(c)>=0){
+          if(c==='-'&&(last==='BOF'||last==='op'||last==='('||last==='comma')){t.push({type:'num',value:0}); t.push({type:'op',op:'-'});}
+          else t.push({type:'op',op:c});
+          last='op'; i++; continue;
+        }
+        if(isD(c)||(c==='.'&&isD(s[i+1]||''))){ var j=i+1; while(j<s.length&&(isD(s[j])||s[j]==='.')) j++; t.push({type:'num',value:parseFloat(s.slice(i,j))}); last='num'; i=j; continue; }
+        if(isL(c)){ var j=i+1; while(j<s.length&&/[A-Za-z0-9_]/.test(s[j])) j++; t.push({type:'name',name:s.slice(i,j).toLowerCase()}); last='name'; i=j; continue; }
+        throw new Error('Unexpected char '+c);
+      }
+      return t;
+    }
+    function toRPN(expr){
+      expr=normalizeExpr(expr||'');
+      expr=convertBarsToAbs(expr);
+      expr=insertMissingParensForUnary(expr);
+      expr=insertImplicitMult(expr);
+      expr=expr.replace(/\s+/g,'');
+      var tokens=tokenize(expr),out=[],ops=[],prec={'+':2,'-':2,'*':3,'/':3,'^':4},right={'^':true};
+      for(var i=0;i<tokens.length;i++){
+        var t=tokens[i];
+        if(t.type==='num'){out.push(t);continue;}
+        if(t.type==='name'){ var nx=tokens[i+1]||{}; if(nx.type==='(') ops.push({type:'func',name:t.name}); else out.push(t); continue; }
+        if(t.type==='op'){
+          while(ops.length){
+            var top=ops[ops.length-1];
+            if(top.type==='op'&&((prec[top.op]>prec[t.op])||(prec[top.op]===prec[t.op]&&!right[t.op]))){ out.push(ops.pop()); } else break;
+          }
+          ops.push(t); continue;
+        }
+        if(t.type==='('){ ops.push(t); continue; }
+        if(t.type===')'){
+          while(ops.length&&ops[ops.length-1].type!=='(') out.push(ops.pop());
+          if(!ops.length) throw new Error('Mismatched parentheses');
+          ops.pop();
+          if(ops.length&&ops[ops.length-1].type==='func') out.push(ops.pop());
+          continue;
+        }
+        if(t.type==='comma'){
+          while(ops.length&&ops[ops.length-1].type!=='(') out.push(ops.pop());
+          if(!ops.length) throw new Error('Comma not in function');
+          continue;
+        }
+      }
+      while(ops.length){ var k=ops.pop(); if(k.type==='(') throw new Error('Mismatched parentheses'); out.push(k); }
+      return out;
+    }
+    function makeFunction(expr){
+      var rpn; try{ rpn=toRPN(expr);}catch(e){ return function(){return NaN;}; }
+      var unary={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:Math.atan,sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,asinh:Math.asinh,acosh:Math.acosh,atanh:Math.atanh,sqrt:Math.sqrt,abs:Math.abs,exp:Math.exp,ln:Math.log,log:Math.log,floor:Math.floor,ceil:Math.ceil,round:Math.round,sign:Math.sign,cbrt:Math.cbrt};
+      var binary={pow:Math.pow,max:Math.max,min:Math.min};
+      return function(x){
+        var st=[];
+        for(var i=0;i<rpn.length;i++){
+          var t=rpn[i];
+          if(t.type==='num'){st.push(t.value);continue;}
+          if(t.type==='name'){
+            if(t.name==='x'){st.push(x);continue;}
+            if(t.name==='pi'){st.push(Math.PI);continue;}
+            if(t.name==='e'){st.push(Math.E);continue;}
+            return NaN;
+          }
+          if(t.type==='op'){
+            var b=st.pop(),a=st.pop();
+            if(t.op==='+') st.push(a+b);
+            else if(t.op==='-') st.push(a-b);
+            else if(t.op==='*') st.push(a*b);
+            else if(t.op=== '/') st.push(a/b);
+            else if(t.op==='^') st.push(Math.pow(a,b));
+            continue;
+          }
+          if(t.type==='func'){
+            var nm=t.name;
+            if(unary[nm]){ var av=st.pop(); st.push(unary[nm](av)); continue; }
+            if(binary[nm]){ var bb=st.pop(),aa=st.pop(); st.push(binary[nm](aa,bb)); continue; }
+            return NaN;
+          }
+        }
+        var y=st.length===1?st[0]:NaN;
+        return Number.isFinite(y)?y:NaN;
+      };
+    }
+
+    // ---------- Parity checker ----------
+    function parityCheck(f, xMin, xMax){
+      var N=401; var a=-Math.max(Math.abs(xMin),Math.abs(xMax)); var b=-a;
+      var both=0,either=0,evenP=0,oddP=0,zero=0; var absTol=1e-6, rel=1e-3;
+      for(var i=0;i<N;i++){
+        var x=a+(i*(b-a))/(N-1);
+        var y1=f(x), y2=f(-x);
+        var v1=Number.isFinite(y1), v2=Number.isFinite(y2);
+        if(v1||v2) either++;
+        if(v1&&v2){
+          both++; var m=Math.max(Math.abs(y1),Math.abs(y2),1);
+          var evenOK=Math.abs(y1-y2)<=Math.max(absTol,rel*m);
+          var oddOK =Math.abs(y1+y2)<=Math.max(absTol,rel*m);
+          if(evenOK) evenP++; if(oddOK) oddP++;
+          if(Math.abs(y1)<=Math.max(absTol,rel*m)&&Math.abs(y2)<=Math.max(absTol,rel*m)) zero++;
+        }
+      }
+      var cover=both/Math.max(1,either);
+      var evenScore=both?evenP/both:0;
+      var oddScore =both?oddP/both:0;
+      var zeroScore=both?zero/both:0;
+      var label='neither', reasons=[];
+      if(cover<0.7) reasons.push('Domain not symmetric or many undefined pairs.');
+      if(both===0)   reasons.push('Could not compare on this window.');
+      if(zeroScore>0.99) label='both (zero function)';
+      else if(evenScore>0.985&&cover>=0.7) label='even';
+      else if(oddScore >0.985&&cover>=0.7) label='odd';
+      return {label,evenScore,oddScore,domainPairRatio:cover,both,either,reasons};
+    }
+
+    // ---------- Graph ----------
+    var width=760,height=460,graphEl=null;
+    function niceStep(span){ var p=Math.pow(10,Math.floor(Math.log10(span))); var c=[p,p/2,p/5]; for(var i=0;i<c.length;i++){ if(span/c[i]<=12) return c[i]; } return p; }
+    function drawGraph(f, expr, range, showMirror, showSpin){
+      var xMin=range.xMin,xMax=range.xMax,yMin=range.yMin,yMax=range.yMax;
+      graphEl.innerHTML='';
+      function toPx(x,y){ return [((x-xMin)/(xMax-xMin))*width, height-((y-yMin)/(yMax-yMin))*height]; }
+      var xStep=niceStep(xMax-xMin), yStep=niceStep(yMax-yMin);
+      function line(x1,y1,x2,y2,col,w){ var l=document.createElementNS('http://www.w3.org/2000/svg','line'); l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2); l.setAttribute('stroke',col); l.setAttribute('stroke-width',w); graphEl.appendChild(l);}
+      for(var x=Math.ceil(xMin/xStep)*xStep;x<=xMax;x+=xStep){ var X=toPx(x,0)[0]; line(X,0,X,height,'#e5e7eb',1); }
+      for(var y=Math.ceil(yMin/yStep)*yStep;y<=yMax;y+=yStep){ var Y=toPx(0,y)[1]; line(0,Y,width,Y,'#e5e7eb',1); }
+      var X0=toPx(0,0)[0], Y0=toPx(0,0)[1]; line(X0,0,X0,height,'#9ca3af',1.5); line(0,Y0,width,Y0,'#9ca3af',1.5);
+      function label(x,y,txt,anc){ var g=document.createElementNS('http://www.w3.org/2000/svg','text'); g.setAttribute('x',x); g.setAttribute('y',y); g.setAttribute('fill','#6b7280'); g.setAttribute('font-size','10'); g.setAttribute('text-anchor',anc||'middle'); g.textContent=txt; graphEl.appendChild(g);}
+      for(var xx=Math.ceil(xMin/xStep)*xStep; xx<=xMax; xx+=xStep){ if(Math.abs(xx)<1e-9) continue; label(toPx(xx,0)[0],Y0+12,Number(xx.toFixed(5)).toString(),'middle'); }
+      for(var yy=Math.ceil(yMin/yStep)*yStep; yy<=yMax; yy+=yStep){ if(Math.abs(yy)<1e-9) continue; label(X0-6,toPx(0,yy)[1]+3,Number(yy.toFixed(5)).toString(),'end'); }
+      function makePath(d,col,w){ var p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke',col); p.setAttribute('stroke-width',w); graphEl.appendChild(p);}
+      function sample(map){ var N=1200,d='',pen=false,prevY=null; for(var i=0;i<=N;i++){ var x=xMin+(i*(xMax-xMin))/N; var pt=map(x),gx=pt.gx,gy=pt.gy; if(!Number.isFinite(gy)||Math.abs(gy)>1e6){ pen=false; prevY=null; continue;} var XY=toPx(gx,gy),X=XY[0],Y=XY[1]; if(prevY!==null&&Math.abs(Y-prevY)>height*0.6){ pen=false; prevY=null;} if(!pen){ d+='M '+X.toFixed(1)+' '+Y.toFixed(1)+' '; pen=true;} else { d+='L '+X.toFixed(1)+' '+Y.toFixed(1)+' '; } prevY=Y;} return d.trim(); }
+      var dMain=sample(function(x){return {gx:x,gy:f(x)};}); makePath(dMain,'#4f46e5',2);
+      if(showMirror){ var dM=sample(function(x){return {gx:-x,gy:f(x)};}); makePath(dM,'#059669',1.5);}
+      if(showSpin){ var dS=sample(function(x){return {gx:-x,gy:-f(x)};}); makePath(dS,'#d97706',1.5);}
+      var title=document.createElementNS('http://www.w3.org/2000/svg','text'); title.setAttribute('x',12); title.setAttribute('y',18); title.setAttribute('fill','#6b7280'); title.setAttribute('font-size','12'); title.textContent='y = '+expr; graphEl.appendChild(title);
+    }
+
+    // ---------- UI helpers ----------
+    var state=null, exprInput=null, showMirrorInput=null, showSpinInput=null, errorBox=null;
+    function renderRange(){
+      var el=document.getElementById('rangeCtl'); var r=state.range; el.innerHTML=''; var row=document.createElement('div'); row.className='row';
+      function field(k){
+        var lab=document.createElement('label'); lab.className='muted'; lab.style.fontSize='14px'; lab.textContent=k+' ';
+        var input=document.createElement('input'); input.type='text'; input.value=r[k]; input.style.marginLeft='8px';
+        input.addEventListener('change',function(){ var v=Number(input.value); if(!Number.isFinite(v)) v=r[k];
+          state.range[k]=v; if(state.range.xMax<=state.range.xMin) state.range.xMax=state.range.xMin+1; if(state.range.yMax<=state.range.yMin) state.range.yMax=state.range.yMin+1; renderAll(); });
+        lab.appendChild(input); return lab;
+      }
+      ['xMin','xMax','yMin','yMax'].forEach(function(k){ row.appendChild(field(k)); });
+      var ctr=document.createElement('div'); ctr.style.marginLeft='auto'; ctr.style.display='flex'; ctr.style.gap='6px';
+      function btn(t,fn,cls){ var b=document.createElement('button'); b.className=cls||'chip gray'; b.textContent=t; b.addEventListener('click',fn); return b;}
+      function zoom(f){ var cx=(r.xMin+r.xMax)/2, cy=(r.yMin+r.yMax)/2, nx=(r.xMax-r.xMin)*f, ny=(r.yMax-r.yMin)*f; state.range={xMin:cx-nx/2,xMax:cx+nx/2,yMin:cy-ny/2,yMax:cy+ny/2}; renderAll(); }
+      function pan(dx,dy){ var sx=(r.xMax-r.xMin)*dx, sy=(r.yMax-r.yMin)*dy; state.range={xMin:r.xMin+sx,xMax:r.xMax+sx,yMin:r.yMin+sy,yMax:r.yMax+sy}; renderAll(); }
+      ctr.appendChild(btn('Zoom In',function(){zoom(0.8);})); ctr.appendChild(btn('Zoom Out',function(){zoom(1.25);})); ctr.appendChild(btn('◀︎',function(){pan(-0.1,0);})); ctr.appendChild(btn('▶︎',function(){pan(0.1,0);})); ctr.appendChild(btn('▲',function(){pan(0,0.1);})); ctr.appendChild(btn('▼',function(){pan(0,-0.1);})); row.appendChild(ctr); el.appendChild(row);
+    }
+
+    function renderParity(f){
+      var pc=parityCheck(f,state.range.xMin,state.range.xMax); var el=document.getElementById('parityPanel'); el.innerHTML='';
+      function badge(t,cls){ var b=document.createElement('span'); b.className='badge '+cls; b.textContent=t; return b;}
+      var head=document.createElement('div'); head.className='row'; head.style.alignItems='center';
+      var title=document.createElement('div'); title.textContent='Classification:'; title.style.fontWeight='600'; title.className='muted'; title.style.color='#334155'; head.appendChild(title);
+      if(pc.label.indexOf('even')>=0) head.appendChild(badge('even','even'));
+      if(pc.label.indexOf('odd')>=0  && pc.label.indexOf('even')<0) head.appendChild(badge('odd','odd'));
+      if(pc.label==='neither') head.appendChild(badge('neither','neither'));
+      if(pc.label.indexOf('both')>=0) head.appendChild(badge('zero function','both'));
+      el.appendChild(head);
+      var grid=document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(4,minmax(0,1fr))'; grid.style.gap='8px';
+      function cell(k,v){ var d=document.createElement('div'); d.className='small'; d.innerHTML=k+': <b>'+v+'</b>'; return d;}
+      grid.appendChild(cell('even score',(pc.evenScore*100).toFixed(1)+'%'));
+      grid.appendChild(cell('odd score',(pc.oddScore*100).toFixed(1)+'%'));
+      grid.appendChild(cell('coverage',(pc.domainPairRatio*100).toFixed(1)+'%'));
+      grid.appendChild(cell('pairs',pc.both));
+      el.appendChild(grid);
+      if(pc.reasons.length){ var ul=document.createElement('ul'); ul.className='small'; ul.style.marginTop='6px'; pc.reasons.forEach(function(r){ var li=document.createElement('li'); li.textContent=r; ul.appendChild(li); }); el.appendChild(ul);}
+    }
+
+    function renderSamples(f){
+      var el=document.getElementById('sampleTable');
+      el.innerHTML='<div class="muted" style="font-weight:600;margin-bottom:6px">Numeric parity spot-check</div>';
+      var table=document.createElement('table'); table.innerHTML='<thead><tr><th>x</th><th>f(x)</th><th>f(-x)</th><th>-f(x)</th></tr></thead>';
+      var tb=document.createElement('tbody');
+      var xs=[-3,-2,-1,-0.5,0,0.5,1,2,3]; function fmt(v){ return Number.isFinite(v)?Number(v.toFixed(5)).toString():'–'; }
+      xs.forEach(function(x){ var tr=document.createElement('tr'); var fx=f(x),fneg=f(-x),nfx=-fx; [x,fmt(fx),fmt(fneg),fmt(nfx)].forEach(function(v){ var td=document.createElement('td'); td.textContent=v; tr.appendChild(td); }); tb.appendChild(tr); });
+      table.appendChild(tb); el.appendChild(table);
+    }
+
+    function renderPresets(){
+      var PRESETS=[["Even",["x^2","|x|","x^4 - 3x^2 + 2","cos(x)"],"green"],["Odd",["x","x^3","x^5 - 4x","sin(x)"],"orange"],["Neither",["x^2 + x","exp(x)","|x-1|","ln(x)","sqrt(x)"],"gray"]];
+      var host=document.getElementById('presets'); host.innerHTML='';
+      PRESETS.forEach(function(g){
+        var box=document.createElement('div'); box.style.marginBottom='8px';
+        var label=document.createElement('div'); label.textContent=g[0]; label.className='small'; label.style.fontWeight='600'; label.style.marginBottom='4px'; label.style.color='#334155'; box.appendChild(label);
+        var row=document.createElement('div'); row.className='row';
+        g[1].forEach(function(fx){
+          var b=document.createElement('button'); b.className='chip '+g[2]; b.textContent=fx;
+          b.addEventListener('click',function(){ state.expr=fx; exprInput.value=fx; renderAll(); });
+          row.appendChild(b);
+        });
+        box.appendChild(row); host.appendChild(box);
+      });
+    }
+
+    function renderTransform(){
+      var host=document.getElementById('transformPanel'); host.innerHTML='';
+      var wrap=document.createElement('div');
+      var head=document.createElement('div'); head.className='muted'; head.style.fontWeight='600'; head.style.marginBottom='6px'; head.textContent='Transforms'; wrap.appendChild(head);
+      var row1=document.createElement('div'); row1.className='row';
+      function chip(txt,fn,cls){ var b=document.createElement('button'); b.className='chip '+(cls||'gray'); b.textContent=txt; b.addEventListener('click',fn); return b;}
+      function replX(e,r){ return e.replace(/\bx\b/g,r);}
+      var c=document.createElement('input'); c.type='number'; c.value=1; c.style.width='80px';
+      var h=document.createElement('input'); h.type='number'; h.value=1; h.style.width='80px';
+      row1.appendChild(chip('× x (toggle parity)',function(){ state.expr='('+state.expr+')*x'; exprInput.value=state.expr; renderAll();},'orange'));
+      row1.appendChild(chip('× -1',function(){ state.expr='-('+state.expr+')'; exprInput.value=state.expr; renderAll();},'orange'));
+      row1.appendChild(chip('+ c',function(){ state.expr='('+state.expr+')+'+c.value; exprInput.value=state.expr; renderAll();},'orange'));
+      row1.appendChild(chip('- c',function(){ state.expr='('+state.expr+')-'+c.value; exprInput.value=state.expr; renderAll();},'orange'));
+      row1.appendChild(chip('→ +h',function(){ state.expr=replX(state.expr,'(x-'+h.value+')'); exprInput.value=state.expr; renderAll();},'orange'));
+      row1.appendChild(chip('← -h',function(){ state.expr=replX(state.expr,'(x+'+h.value+')'); exprInput.value=state.expr; renderAll();},'orange'));
+      row1.appendChild(document.createTextNode(' c: ')); row1.appendChild(c);
+      row1.appendChild(document.createTextNode(' h: ')); row1.appendChild(h);
+      wrap.appendChild(row1);
+      var row2=document.createElement('div'); row2.className='row'; row2.style.marginTop='8px';
+      var k=document.createElement('input'); k.type='number'; k.value=1; k.style.width='80px';
+      row2.appendChild(document.createTextNode(' k: ')); row2.appendChild(k);
+      row2.appendChild(chip('y ← k·f(x)',function(){ state.expr=k.value+'*('+state.expr+')'; exprInput.value=state.expr; renderAll();},'green'));
+      row2.appendChild(chip('x ← k·x',function(){ state.expr=replX(state.expr,'('+k.value+'*x)'); exprInput.value=state.expr; renderAll();},'green'));
+      var tip=document.createElement('div'); tip.className='small'; tip.style.marginTop='6px'; tip.textContent='Vertical shifts keep evenness but break oddness (unless shift=0). Horizontal shifts usually break both.';
+      wrap.appendChild(row2); wrap.appendChild(tip); host.appendChild(wrap);
+    }
+
+    function renderInquiry(){
+      var host=document.getElementById('inquiry'); host.innerHTML='';
+      var title=document.createElement('div'); title.className='muted'; title.style.fontWeight='600'; title.textContent='Guided Inquiry (Criterion B): Investigate patterns'; host.appendChild(title);
+      var body=document.createElement('div'); body.className='small'; body.style.fontSize='14px'; body.style.color='#334155'; body.style.lineHeight='1.5';
+      body.innerHTML = `
+        <ol style="margin:8px 0 0 18px">
+          <li>Toggle <b>mirror</b> and <b>180° spin</b>. When do their overlays land exactly on the blue curve?</li>
+          <li>Try several functions. Start with quick picks, then make your own. What common features appear when the mirror matches vs the 180° spin?</li>
+          <li>Predict &amp; test: describe a new function you think will match each overlay, then check. If it fails, refine your rule.</li>
+          <li>Stress-test your rule: add <i>+c</i> or <i>−c</i>, multiply by <i>−1</i> or by <i>x</i>, and shift left/right. Which changes break the match and which keep it?</li>
+          <li>Edge cases: what happens with the zero function, with <code>|x|</code>, with <code>ln(x)</code> (domain!), or with vertical stretches?</li>
+        </ol>`;
+      host.appendChild(body);
+      var quick=['x^2','|x|','cos(x)','x','x^3','sin(x)','x^2 + x','|x-1|','ln(x)'];
+      var row=document.createElement('div'); row.className='row';
+      quick.forEach(function(fx){
+        var b=document.createElement('button'); b.className='chip gray'; b.textContent=fx;
+        b.addEventListener('click',function(){ state.expr=fx; exprInput.value=fx; renderAll(); });
+        row.appendChild(b);
+      });
+      host.appendChild(row);
+      var hint=document.createElement('details'); hint.className='small'; hint.style.marginTop='6px';
+      hint.innerHTML='<summary>Need a nudge?</summary><div class="small">Look for symmetry about the y-axis vs a half-turn around the origin. Compare values at x and −x visually with the overlays.</div>';
+      host.appendChild(hint);
+    }
+
+    function renderAll(){
+      var f;
+      try{
+        errorBox.textContent='';
+        f=makeFunction(state.expr);
+        var t=f(0);
+        if(!Number.isFinite(t)&&state.expr.replace(/\s+/g,'')!=='x^2') throw new Error('Parse error');
+      }catch(e){
+        errorBox.textContent='Could not parse expression';
+        f=function(){return NaN;};
+      }
+      drawGraph(f,state.expr,state.range,state.showMirror,state.showSpin);
+      renderRange();
+      renderParity(f);
+      renderSamples(f);
+    }
+
+    function init(){
+      exprInput=document.getElementById('expr'); showMirrorInput=document.getElementById('showMirror'); showSpinInput=document.getElementById('showSpin'); errorBox=document.getElementById('error'); graphEl=document.getElementById('graph');
+      state={ expr: exprInput.value||'x^2', showMirror: showMirrorInput.checked, showSpin: showSpinInput.checked, range:{xMin:-10,xMax:10,yMin:-6,yMax:6} };
+      exprInput.addEventListener('input',function(e){ state.expr=e.target.value; renderAll(); });
+      showMirrorInput.addEventListener('change',function(e){ state.showMirror=e.target.checked; renderAll(); });
+      showSpinInput.addEventListener('change',function(e){ state.showSpin=e.target.checked; renderAll(); });
+      renderInquiry();
+      renderPresets();
+      renderTransform();
+      renderAll();
+    }
+
+    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+  })();
+  </script>
+</body>
+</html>
