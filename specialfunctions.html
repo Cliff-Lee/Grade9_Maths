@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Function Activities</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    textarea, select, input, button {
+      margin: 8px;
+      padding: 6px 12px;
+      font-size: 1em;
+    }
+    #taskArea {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      justify-items: center;
+    }
+    .studentTask {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .equation {
+      font-weight: bold;
+      font-size: 1em;
+      margin-bottom: 6px;
+      color: #2c3e50;
+    }
+    .instruction {
+      margin-bottom: 6px;
+      font-size: 0.95em;
+    }
+    .answer {
+      display: none;
+      margin-top: 6px;
+      font-weight: bold;
+      color: #27ae60;
+    }
+    #graph {
+      margin-top: 20px;
+      width: 95%;
+      max-width: 800px;
+      height: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      display: none; /* hidden by default */
+    }
+    footer {
+      margin-top: auto;
+      padding: 10px;
+      font-size: 0.9em;
+      color: #555;
+      background: #f0f0f0;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Function Activity Applet</h1>
+
+  <label for="activity">Choose Activity:</label>
+  <select id="activity">
+    <option value="step">Step Function Walk</option>
+    <option value="piecewise">Piecewise Relay</option>
+    <option value="absolute">Absolute Value Mirror</option>
+    <option value="stair">Stair Hop</option>
+  </select>
+  <br>
+
+  <label for="names">Paste Student Names (one per line):</label><br>
+  <textarea id="names" rows="6" cols="30" placeholder="Ryan&#10;Ishaan&#10;Ethan&#10;Candy&#10;Kaede&#10;Kyeongmin&#10;Nora&#10;Yihan&#10;Dongjun&#10;Yuhyun&#10;Jensen"></textarea><br>
+
+  <button onclick="generateTasks()">Generate Tasks</button>
+  <button onclick="reshuffleTasks()">Reshuffle X-Values</button>
+  <button onclick="toggleGraph()">Show Graph</button>
+
+  <div id="graph"></div>
+  <div id="taskArea"></div>
+
+  <footer>
+    Created September 20th 2025 — <a href="mailto:cliffpackman@gmail.com">cliffpackman@gmail.com</a>
+  </footer>
+
+  <script>
+    let tasks = [];
+    let eqnText = "";
+    let activity = "";
+    let studentNames = [];
+    let graphVisible = false;
+
+    function f(activity, x) {
+      switch(activity) {
+        case "step": return (x < 3) ? 5 : (x < 6 ? 7 : 9);
+        case "piecewise": return (x < 0) ? -2*x + 1 : x - 2;
+        case "absolute": return 2*Math.abs(x-3)-1;
+        case "stair": return Math.floor(x);
+      }
+    }
+
+    function generateEquationText(activity) {
+      switch(activity) {
+        case "step": return "y = 5 (x < 3),   y = 7 (3 ≤ x < 6),   y = 9 (x ≥ 6)";
+        case "piecewise": return "y = -2x + 1 (x < 0),   y = x - 2 (x ≥ 0)";
+        case "absolute": return "y = 2|x - 3| - 1";
+        case "stair": return "y = ⌊x⌋";
+      }
+    }
+
+    function assignTasks() {
+      tasks = studentNames.map(name => {
+        let x = Math.floor(Math.random() * 21) - 10;
+        let y = f(activity, x);
+        return { name, x, y };
+      });
+    }
+
+    function renderTasks() {
+      const taskArea = document.getElementById("taskArea");
+      taskArea.innerHTML = "";
+      tasks.forEach(({name, x, y}) => {
+        const card = document.createElement("div");
+        card.className = "studentTask";
+        card.innerHTML = `
+          <div class="equation">Equation: ${eqnText}</div>
+          <div class="instruction"><b>${name}: Evaluate at x = ${x}</b></div>
+          <div class="answer">Answer: y = ${y}</div>
+          <button onclick="this.previousElementSibling.style.display='block'">Show Answer</button>
+        `;
+        taskArea.appendChild(card);
+      });
+    }
+
+    function generateTasks() {
+      activity = document.getElementById("activity").value;
+      eqnText = generateEquationText(activity);
+      studentNames = document.getElementById("names").value.trim().split("\n").filter(n => n);
+      if (!studentNames.length) {
+        alert("Please enter student names!");
+        return;
+      }
+      assignTasks();
+      renderTasks();
+      if (graphVisible) showGraph();
+    }
+
+    function reshuffleTasks() {
+      if (!studentNames.length) {
+        alert("Generate tasks first!");
+        return;
+      }
+      assignTasks();
+      renderTasks();
+      if (graphVisible) showGraph();
+    }
+
+    function toggleGraph() {
+      const graphDiv = document.getElementById("graph");
+      graphVisible = !graphVisible;
+      const btn = document.querySelector("button[onclick='toggleGraph()']");
+      if (graphVisible) {
+        btn.textContent = "Hide Graph";
+        graphDiv.style.display = "block";
+        showGraph();
+      } else {
+        btn.textContent = "Show Graph";
+        graphDiv.style.display = "none";
+      }
+    }
+
+    function showGraph() {
+      if (!tasks.length) {
+        alert("Generate tasks first!");
+        return;
+      }
+
+      let xs = [], ys = [];
+      for (let x=-10; x<=10; x+=0.1) {
+        xs.push(x);
+        ys.push(f(activity, x));
+      }
+
+      const functionTrace = {
+        x: xs,
+        y: ys,
+        mode: "lines",
+        name: "Function",
+        line: {color: "blue"}
+      };
+
+      const studentTrace = {
+        x: tasks.map(t => t.x),
+        y: tasks.map(t => t.y),
+        mode: "markers+text",
+        text: tasks.map(t => t.name),
+        textposition: "top right",
+        name: "Students",
+        marker: {color: "red", size: 10}
+      };
+
+      const layout = {
+        title: "Graph View",
+        xaxis: {range: [-10,10], zeroline:true, title:"x"},
+        yaxis: {range: [-10,10], zeroline:true, title:"y"},
+        margin: {l: 50, r: 20, t: 50, b: 50}
+      };
+
+      Plotly.newPlot("graph", [functionTrace, studentTrace], layout, {responsive:true});
+    }
+  </script>
+
+</body>
+</html>
